@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Football Viz | Inspired by FT</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <!-- link rel="icon" href="ladybird.png" -->
+    <meta property="og:title" content="FT-Inspired Football Viz">
+    <!-- meta property="og:image" content="https://species-quiz.netlify.app/ladybird.png" -->
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,400&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=KoHo:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&display=swap"
+        rel="stylesheet">
+    <script src="js/main_data.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+
+</head>
+
+<body>
+
+    <div id="header-container">
+        <div id="main-inputs-container">
+            <div class="autocomplete-container">
+                <input type="text" name="first-team" id="team1" value="Crystal Palace">
+            </div>
+            <span style="margin-top:4px;">vs</span>
+            <div class="autocomplete-container">
+                <input type="text" name="second-team" id="team2" value="Arsenal">
+            </div>
+            <button class="button-type-a" onclick="filterData();">Update</button>
+        </div>
+    </div>
+
+    <div id="main-container">
+        <div id="viz-container">
+            <div id="main-viz"></div>
+        </div>
+    </div>
+
+    <script>
+        var team1, team2, data, plotData;
+        var hoverSensitive = true;
+        var teamSet = new Set(engData.map(x => x['HomeTeam']).concat(engData.map(x => x['AwayTeam'])));
+        var allTeams = Array.from(teamSet);
+        var colors = {};
+        allTeams.sort();
+
+        // set the dimensions and margins of the graph
+        var margin = { top: 30, right: 60, bottom: 30, left: 60 },
+            width = 800 - margin.left - margin.right,
+            height = 340 - margin.top - margin.bottom;
+
+
+
+        function filterData() {
+            team1 = document.getElementById('team1').value;
+            team2 = document.getElementById('team2').value;
+            data = engData.filter(d => ((d['AwayTeam'] == team1 && d['HomeTeam'] == team2) || (d['AwayTeam'] == team2 && d['HomeTeam'] == team1)));
+            console.log(data.length);
+
+            colors = {};
+            colors[team1] = '#27c';
+            colors[team2] = '#c22';
+            colors['draw'] = '#555';
+
+            updateViz();
+
+        };
+
+        function updateViz() {
+
+            d3.select("#main-viz").html("");
+
+            // append the svg object to the body of the page
+            var svg = d3.select("#main-viz")
+                .append("svg")
+                .attr("preserveAspectRatio", "xMinYMin meet")
+                .classed("svg-content-responsive", true)
+                .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height+ margin.top + margin.bottom}`)
+                //.attr("width", width + margin.left + margin.right)
+                //.attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform",
+                    "translate(" + margin.left + "," + margin.top + ")");
+            plotData = data.map(function (d) {
+                var newrec = {};
+                newrec['team-1-goals'] = ((d['HomeTeam'] == team1) ? d['FTHG'] : d['FTAG']);
+                newrec['team-2-goals'] = ((d['HomeTeam'] == team2) ? d['FTHG'] : d['FTAG']);
+                newrec['date'] = d3.isoParse(d['Date']);
+                newrec['winner'] = ((d['FTR'] == 'D') ? 'draw' : ((d['FTR'] == 'H') ? d['HomeTeam'] : d['AwayTeam']));
+                return newrec;
+            });
+
+            plotData.sort(function (a, b) { return a['date'].getTime() - b['date'].getTime() });
+            var maxx = Math.max(...plotData.map(d => d['date']));
+            var minx = Math.min(...plotData.map(d => d['date']));
+            var maxy = Math.max(...plotData.map(d => d['team-1-goals']));
+            var miny = Math.min(...plotData.map(d => d['team-2-goals'] * -1));
+            var maxabsy = Math.max(maxy, miny * -1);
+            console.log(maxx);
+
+            // X scale and Axis
+            var x = d3.scaleTime()
+                .domain([minx, maxx])         // This is the min and the max of the data: 0 to 100 if percentages
+                .range([0, width]);    // This is the corresponding value I want in Pixel
+            svg
+                .append('g')
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(x));
+
+            // Y scale and Axis
+            var y = d3.scaleLinear()
+                .domain([maxabsy * -1 - 1, maxabsy + 1])         // This is the min and the max of the data: 0 to 100 if percentages
+                .range([height, 0]);       // This is the corresponding value I want in Pixel
+
+            svg
+                .append('g')
+                .call(d3.axisLeft(y).tickFormat(x => Math.abs(x)));
+
+            // gridlines in x axis function
+            function make_x_gridlines() {
+                return d3.axisBottom(x)
+            }
+
+            // gridlines in y axis function
+            function make_y_gridlines() {
+                return d3.axisLeft(y)
+            }
+
+            // add the X gridlines
+            svg.append("g")
+                .attr("class", "grid")
+                .attr("transform", "translate(0," + height + ")")
+                .call(make_x_gridlines()
+                    .tickSize(-height)
+                    .tickFormat("")
+                )
+
+            // add the Y gridlines
+            svg.append("g")
+                .attr("class", "grid")
+                .call(make_y_gridlines()
+                    .tickSize(-width)
+                    .tickFormat("")
+                )
+
+            svg.append("path")
+                .datum([[minx, 0], [maxx, 0]])
+                .attr("fill", "none")
+                .attr("stroke", "#ddd")
+                .attr("stroke-width", 2)
+                .attr("d", d3.line()
+                    .x(function (d) { return x(d[0]) })
+                    .y(function (d) { return y(d[1]) })
+                )
+
+
+            var node = svg.selectAll("whatever")
+                .data(plotData)
+                .enter()
+                .append('g')
+                .on('mouseover', mouseover)
+                .on('mousemove', mousemove)
+                .on('mouseleave', mouseleave)
+                .on("click", click)
+
+            node.append("path")
+                .attr("fill", "none")
+                .attr("stroke", function (d) { return  colors[d['winner']];})
+                .attr("stroke-width", 2)
+                .datum(function (d) { return [[d['date'], d['team-1-goals']], [d['date'], d['team-2-goals'] * -1]] })
+                .attr("d", d3.line()
+                    .x(function (d) { return x(d[0]) })
+                    .y(function (d) { return y(d[1]) })
+                )
+
+            node.append("circle")
+                .attr("cx", function (d) { return x(d['date']) })
+                .attr("cy", function (d) { return y(d['team-1-goals']) })
+                .attr("r", 4)
+                //.attr('stroke', '#fff')
+                .attr('fill', function (d) { return  colors[d['winner']];})
+
+            node.append("circle")
+                .attr("cx", function (d) { return x(d['date']) })
+                .attr("cy", function (d) { return y(d['team-2-goals'] * -1) })
+                .attr("r", 4)
+                //.attr('stroke', '#fff')
+                .attr('fill', function (d) { return  colors[d['winner']];})
+
+            var Tooltip = d3.select("#main-viz")
+                .append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0)
+                .attr("class", "tooltip")
+                .style("color", "#eee")
+                .style("font-family", "Source Sans Pro")
+                .style("background-color", "#444")
+                .style("border-radius", "5px")
+                .style("padding", "3px")
+                .style("box-shadow", "0 2px 3px 0 rgba(0,0,0,0.2)")
+                .style("position", "absolute");
+
+            // Three functions that change the tooltip when user hover / move / leave a point
+            function mouseover(e, d) {
+
+                if (hoverSensitive) {
+                    Tooltip
+                        .style("opacity", 1)
+                        .html(`${team1} ${d['team-1-goals']} - ${d['team-2-goals']} ${team2}<br>${d['date'].toLocaleDateString()}`)
+                    d3.select(this)
+                        .style("fill", "#789")
+                }
+            }
+            function mousemove(event) {
+                if (hoverSensitive) {
+                    Tooltip
+                        .style("left", (event.clientX + 15) + "px")
+                        .style("top", (event.clientY -40) + "px")
+                        .style("max-height", `${window.innerHeight - d3.pointer(event)[1] - 8}px`);
+                }
+            }
+            function mouseleave(e) {
+                if (hoverSensitive) {
+                    Tooltip
+                        .style("opacity", 0)
+                    d3.select(this)
+                        .style('fill', 'transparent')
+                }
+            }
+
+            // function that freezes/unfreezes the tooltip when a point is clicked
+            function click(e, d) {
+                hoverSensitive = !hoverSensitive
+                Tooltip
+                    .style("opacity", 1)
+            }
+
+        };
+
+
+    </script>
+    <script src="js/autocomplete.js"></script>
+
+</body>
+
+</html>

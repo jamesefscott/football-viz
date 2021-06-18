@@ -235,9 +235,9 @@
                 .attr("class", "tooltip")
                 .style("opacity", 0)
                 .attr("class", "tooltip")
-                .style("color", "#eee")
+                .style("color", "#333")
                 .style("font-family", "Source Sans Pro")
-                .style("background-color", "#444")
+                .style("background-color", "#fff")
                 .style("border-radius", "5px")
                 .style("padding", "3px")
                 .style("box-shadow", "0 2px 3px 0 rgba(0,0,0,0.2)")
@@ -258,7 +258,7 @@
                 if (hoverSensitive) {
                     Tooltip
                         .style("left", (event.clientX + 15) + "px")
-                        .style("top", (event.clientY - 40) + "px")
+                        .style("top", (event.clientY - 70) + "px")
                         .style("max-height", `${window.innerHeight - d3.pointer(event)[1] - 8}px`);
                 }
             }

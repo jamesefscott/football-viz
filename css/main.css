@@ -40,8 +40,7 @@ button:active {
     width:100%;
 }
 
-.autocomplete-container {
-}
+.autocomplete-container {z-index: 2;}
 
 .autocomplete-items{
     background:transparent;
@@ -186,6 +185,6 @@ button:active {
 
 #viz-container {
     position:relative;
-    padding-top: 30px;
-    pointer-events: none;
+    top: 35px;
+    pointer-events: all;
 }

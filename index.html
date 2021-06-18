@@ -41,6 +41,28 @@
         </div>
     </div>
 
+    <div id="legend-container">
+        <div class="legend-row" id="legend-team1">
+            <div class="legend-count" id="team1-wins"></div>
+            <div class="legend-color" id="team1-color"></div>
+            <div class="legend-text" id="team1-name">Brighton</div>
+        </div>
+        <div class="legend-row" id="legend-team2">
+            <div class="legend-count" id="team2-wins"></div>
+            <div class="legend-color" id="team2-color"></div>
+            <div class="legend-text" id="team2-name">Crystal Palace</div>
+        </div>
+        <div class="legend-row" id="legend-draw">
+            <div class="legend-count" id="draw-count"></div>
+            <div class="legend-color" id="draw-color"></div>
+            <div class="legend-text" id="draw-name">Draw</div>
+        </div>
+    </div>
+
+    <div id="credits-info">
+        Based on graphic from Financial Times<br>Prompted by <a href="https://twitter.com/VictimOfMaths" target="_blank">@VictimOfMaths</a><br>Data from <a href="https://www.football-data.co.uk/" target="_blank">football-data.co.uk</a> 
+    </div>
+
     <script>
         var team1, team2, data, plotData;
         var hoverSensitive = true;
@@ -50,9 +72,9 @@
         allTeams.sort();
 
         // set the dimensions and margins of the graph
-        var margin = { top: 30, right: 60, bottom: 30, left: 60 },
-            width = 1000 - margin.left - margin.right,
-            height = 440 - margin.top - margin.bottom;
+        var margin = { top: 30, right: 30, bottom: 30, left: 60 },
+            width = 900 - margin.left - margin.right,
+            height = 350 - margin.top - margin.bottom;
 
 
 
@@ -61,6 +83,9 @@
             team2 = document.getElementById('team2').value;
             data = engData.filter(d => ((d['AwayTeam'] == team1 && d['HomeTeam'] == team2) || (d['AwayTeam'] == team2 && d['HomeTeam'] == team1)));
             console.log(data.length);
+            
+            document.getElementById('team1-name').innerText = team1 + " wins";
+            document.getElementById('team2-name').innerText = team2 + " wins";
 
             colors = {};
             colors[team1] = '#27c';
@@ -80,7 +105,7 @@
                 .append("svg")
                 .attr("preserveAspectRatio", "xMinYMin meet")
                 .classed("svg-content-responsive", true)
-                .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height+ margin.top + margin.bottom}`)
+                .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
                 //.attr("width", width + margin.left + margin.right)
                 //.attr("height", height + margin.top + margin.bottom)
                 .append("g")
@@ -94,8 +119,12 @@
                 newrec['winner'] = ((d['FTR'] == 'D') ? 'draw' : ((d['FTR'] == 'H') ? d['HomeTeam'] : d['AwayTeam']));
                 return newrec;
             });
-
             plotData.sort(function (a, b) { return a['date'].getTime() - b['date'].getTime() });
+            
+            document.getElementById('team1-wins').innerHTML = `<span>${plotData.filter(d => d['winner'] == team1).length}</span>`;
+            document.getElementById('team2-wins').innerHTML = `<span>${plotData.filter(d => d['winner'] == team2).length}</span>`;
+            document.getElementById('draw-count').innerHTML = `<span>${plotData.filter(d => d['winner'] == 'draw').length}</span>`;
+            
             var maxx = Math.max(...plotData.map(d => d['date']));
             var minx = Math.min(...plotData.map(d => d['date']));
             var maxy = Math.max(...plotData.map(d => d['team-1-goals']));
@@ -130,6 +159,15 @@
             function make_y_gridlines() {
                 return d3.axisLeft(y)
             }
+
+
+            svg.append("text")
+                .text(`${team1} Goals`)
+                .attr("style", "color:#333; font-size:0.9em; text-align:center; transform: translate(-3%,30%) rotate(-90deg)")
+
+            svg.append("text")
+                .text(`${team2} Goals`)
+                .attr("style", "color:#333; font-size:0.9em; text-align:center; transform: translate(-3%,78%) rotate(-90deg)")
 
             // add the X gridlines
             svg.append("g")
@@ -170,7 +208,7 @@
 
             node.append("path")
                 .attr("fill", "none")
-                .attr("stroke", function (d) { return  colors[d['winner']];})
+                .attr("stroke", function (d) { return colors[d['winner']]; })
                 .attr("stroke-width", 2)
                 .datum(function (d) { return [[d['date'], d['team-1-goals']], [d['date'], d['team-2-goals'] * -1]] })
                 .attr("d", d3.line()
@@ -183,14 +221,14 @@
                 .attr("cy", function (d) { return y(d['team-1-goals']) })
                 .attr("r", 4)
                 //.attr('stroke', '#fff')
-                .attr('fill', function (d) { return  colors[d['winner']];})
+                .attr('fill', function (d) { return colors[d['winner']]; })
 
             node.append("circle")
                 .attr("cx", function (d) { return x(d['date']) })
                 .attr("cy", function (d) { return y(d['team-2-goals'] * -1) })
                 .attr("r", 4)
                 //.attr('stroke', '#fff')
-                .attr('fill', function (d) { return  colors[d['winner']];})
+                .attr('fill', function (d) { return colors[d['winner']]; })
 
             var Tooltip = d3.select("#main-viz")
                 .append("div")
@@ -220,7 +258,7 @@
                 if (hoverSensitive) {
                     Tooltip
                         .style("left", (event.clientX + 15) + "px")
-                        .style("top", (event.clientY -40) + "px")
+                        .style("top", (event.clientY - 40) + "px")
                         .style("max-height", `${window.innerHeight - d3.pointer(event)[1] - 8}px`);
                 }
             }

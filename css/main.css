@@ -6,7 +6,7 @@ button {
     box-shadow: 0 3px 0 0 #333;
     transition: border-radius 200ms, background 200ms;
     border:none;
-    border-radius:10px;
+    border-radius: 3px;
     color:#333;
     font-weight:600;
     font-size:1.2em;
@@ -24,6 +24,7 @@ button:active {
 .button-type-a {
     width:100px;
     background: rgb(218,218,218);
+    margin-left:4px;
 }
 
 .autocomplete-items{
@@ -71,15 +72,120 @@ button:active {
 #team1 {
     background:#27c;
     border:none;
-    padding:3px;
+    padding:5px;
     color:#fff;
-    margin: 4px;
+    margin: 2px 4px;
 }
 
 #team2 {
     background:#c22;
     border:none;
-    padding:3px;
+    padding:5px;
     color:#fff;
-    margin: 4px;
+    margin: 2px 4px;
+}
+
+#legend-container {
+    position:absolute;
+    top:0;
+    right:0;
+    width:180px;
+    height:120px;
+    border-radius:5px;
+    border-bottom: solid 1px #ddd;
+    border-left: solid 1px #ddd;
+    box-shadow: -2px 2px 
+    overflow:hidden;
+}
+
+.legend-row {
+    position:relative;
+    background:rgba(255,255,255,0.8);
+    height:40px;
+    width:100%; 
+    display:flex;
+}
+
+.legend-text {
+    position:absolute;
+    font-size:0.9em;
+    width:120px;
+    left:45px;
+    height:100%;
+    display:flex;
+    align-items:center;
+}
+
+.legend-color {
+    position:absolute;
+    width:2px;
+    height:20px;
+    background: #555;
+    top:10px;
+    left:35px;
+}
+
+#team1-color {
+    background:#27c;
+}
+
+#team2-color {
+    background:#c22;
+}
+
+.legend-color:before {
+    position:absolute;
+    content:"";
+    top:-5px;
+    left:-3px;
+    width:8px;
+    height:8px;
+    background: inherit;
+    border-radius:10px;
+}
+
+.legend-color:after {
+    position:absolute;
+    content:"";
+    bottom:-5px;
+    left:-3px;
+    width:8px;
+    height:8px;
+    background: inherit;
+    border-radius:10px;
+}
+
+.legend-count {
+    position:relative;
+    font-size:20px;
+    height:40px;
+    width:32px;
+    display:flex;
+    align-items: center;
+    justify-content: right;
+    font-weight:600;
+    color: #333;
+}
+
+.legend-count span {
+    position: absolute;
+    right: 5px;
+}
+
+#credits-info {
+    position:absolute;
+    top:3px;
+    left:3px;
+    font-size:0.8em;
+    color:#555;
+}
+
+#main-inputs-container {
+    position:absolute;
+}
+
+#viz-container {
+    position:relative;
+    padding-top: 30px;
+    pointer-events: none;
 }

@@ -25,11 +25,11 @@
     <div id="header-container">
         <div id="main-inputs-container">
             <div class="autocomplete-container">
-                <input type="text" name="first-team" id="team1" value="Brighton">
+                <input type="text" name="first-team" id="team1" value="Everton">
             </div>
             <span style="margin-top:4px;">vs</span>
             <div class="autocomplete-container">
-                <input type="text" name="second-team" id="team2" value="Crystal Palace">
+                <input type="text" name="second-team" id="team2" value="Liverpool">
             </div>
             <button class="button-type-a" onclick="filterData();">Update</button>
         </div>
@@ -41,16 +41,21 @@
         </div>
     </div>
 
+    <div id="credits-info">
+        Based on graphic from Financial Times<br>Prompted by <a href="https://twitter.com/VictimOfMaths" target="_blank">@VictimOfMaths</a><br>Data
+        from <a href="https://www.football-data.co.uk/" target="_blank">football-data.co.uk</a>
+    </div>
+
     <div id="legend-container">
         <div class="legend-row" id="legend-team1">
             <div class="legend-count" id="team1-wins"></div>
             <div class="legend-color" id="team1-color"></div>
-            <div class="legend-text" id="team1-name">Brighton wins</div>
+            <div class="legend-text" id="team1-name"></div>
         </div>
         <div class="legend-row" id="legend-team2">
             <div class="legend-count" id="team2-wins"></div>
             <div class="legend-color" id="team2-color"></div>
-            <div class="legend-text" id="team2-name">Crystal Palace wins</div>
+            <div class="legend-text" id="team2-name"></div>
         </div>
         <div class="legend-row" id="legend-draw">
             <div class="legend-count" id="draw-count"></div>
@@ -59,9 +64,7 @@
         </div>
     </div>
 
-    <div id="credits-info">
-        Based on graphic from Financial Times<br>Prompted by <a href="https://twitter.com/VictimOfMaths" target="_blank">@VictimOfMaths</a><br>Data from <a href="https://www.football-data.co.uk/" target="_blank">football-data.co.uk</a> 
-    </div>
+
 
     <script>
         var team1, team2, data, plotData;
@@ -71,19 +74,13 @@
         var colors = {};
         allTeams.sort();
 
-        // set the dimensions and margins of the graph
-        var margin = { top: 30, right: 30, bottom: 30, left: 60 },
-            width = 900 - margin.left - margin.right,
-            height = 350 - margin.top - margin.bottom;
-
-
 
         function filterData() {
             team1 = document.getElementById('team1').value;
             team2 = document.getElementById('team2').value;
             data = engData.filter(d => ((d['AwayTeam'] == team1 && d['HomeTeam'] == team2) || (d['AwayTeam'] == team2 && d['HomeTeam'] == team1)));
             console.log(data.length);
-            
+
             document.getElementById('team1-name').innerText = team1 + " wins";
             document.getElementById('team2-name').innerText = team2 + " wins";
 
@@ -97,6 +94,11 @@
         };
 
         function updateViz() {
+
+            // set the dimensions and margins of the graph
+            var margin = { top: 30, right: 30, bottom: 30, left: 60 },
+                width = window.innerWidth - margin.left - margin.right,
+                height = Math.round(Math.min(window.innerHeight * 0.8, window.innerWidth)) - margin.top - margin.bottom;
 
             d3.select("#main-viz").html("");
 
@@ -120,11 +122,11 @@
                 return newrec;
             });
             plotData.sort(function (a, b) { return a['date'].getTime() - b['date'].getTime() });
-            
+
             document.getElementById('team1-wins').innerHTML = `<span>${plotData.filter(d => d['winner'] == team1).length}</span>`;
             document.getElementById('team2-wins').innerHTML = `<span>${plotData.filter(d => d['winner'] == team2).length}</span>`;
             document.getElementById('draw-count').innerHTML = `<span>${plotData.filter(d => d['winner'] == 'draw').length}</span>`;
-            
+
             var maxx = Math.max(...plotData.map(d => d['date']));
             var minx = Math.min(...plotData.map(d => d['date']));
             var maxy = Math.max(...plotData.map(d => d['team-1-goals']));
@@ -163,11 +165,11 @@
 
             svg.append("text")
                 .text(`${team1} Goals`)
-                .attr("style", "color:#333; font-size:0.9em; text-align:center; transform: translate(-3%,30%) rotate(-90deg)")
+                .attr("style", "color:#333; font-size:0.9em; text-align:center; transform: translate(-25px,30%) rotate(-90deg)")
 
             svg.append("text")
                 .text(`${team2} Goals`)
-                .attr("style", "color:#333; font-size:0.9em; text-align:center; transform: translate(-3%,78%) rotate(-90deg)")
+                .attr("style", "color:#333; font-size:0.9em; text-align:center; transform: translate(-25px,78%) rotate(-90deg)")
 
             // add the X gridlines
             svg.append("g")
@@ -189,8 +191,8 @@
             svg.append("path")
                 .datum([[minx, 0], [maxx, 0]])
                 .attr("fill", "none")
-                .attr("stroke", "#ddd")
-                .attr("stroke-width", 2)
+                .attr("stroke", "#444")
+                .attr("stroke-width", 1)
                 .attr("d", d3.line()
                     .x(function (d) { return x(d[0]) })
                     .y(function (d) { return y(d[1]) })
@@ -280,7 +282,7 @@
 
         };
 
-    filterData();
+        filterData();
     </script>
     <script src="js/autocomplete.js"></script>
 

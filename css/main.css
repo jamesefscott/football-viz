@@ -25,6 +25,8 @@ button:active {
     width:100px;
     background: rgb(218,218,218);
     margin-left:4px;
+    z-index: 2;
+    position: relative;
 }
 
 .autocomplete-items{
@@ -35,33 +37,37 @@ button:active {
 #main-inputs-container {
     display: flex;
     flex-direction:row;
+    flex-wrap:wrap;
     justify-content: center;
     align-items:top;
-    width:100%;
+    width: calc(100% - 300px);
+    margin: auto;
 }
 
-.autocomplete-container {z-index: 2;}
+.autocomplete-container {position: relative;}
 
 .autocomplete-items{
-    background:transparent;
+    background: #fff;
     width:100%;
     max-height: 80vh;
     overflow-y: auto;
+    position: absolute;
+    border-radius:5px;
+    box-shadow: 0 1px 5px 0 rgba(0,0,0,0.1);
+    z-index: 5;
 }
 
 .autocomplete-items div{
-    border:solid 2px #fff;
-    color:#fff;
-    background: #555;
-    border-radius:5px;
+    padding:2px 0 2px 2px;
+    color:#333;
     cursor:pointer;
+    z-index: 5;
+    position: relative;
 }
 
 .autocomplete-items div:hover{
-    border:solid 2px transparent;
-    background: #ffffff;
-    color:#555;
-    border-radius:5px;
+    background: #fafafa;
+    box-shadow: inset 0 -1px 2px 0 rgba(0,0,0,0.15)
 }
 
 .grid {
@@ -69,19 +75,25 @@ button:active {
 }
 
 #team1 {
+    position: relative;
+    z-index: 2;
     background:#27c;
     border:none;
     padding:5px;
     color:#fff;
     margin: 2px 4px;
+    margin-bottom:6px;
 }
 
 #team2 {
-    background:#c22;
+    background: #c22;
     border:none;
     padding:5px;
     color:#fff;
     margin: 2px 4px;
+    margin-bottom:6px;
+    z-index: 2;
+    position: relative;
 }
 
 #legend-container {
@@ -90,10 +102,8 @@ button:active {
     right:0;
     width:180px;
     height:120px;
-    border-radius:5px;
-    border-bottom: solid 1px #ddd;
-    border-left: solid 1px #ddd;
-    box-shadow: -2px 2px 
+    border-radius:5px 0 0 5px;
+    box-shadow: 0px 2px 4px 0 rgba(0,0,0,0.2); 
     overflow:hidden;
 }
 
@@ -180,11 +190,33 @@ button:active {
 }
 
 #main-inputs-container {
-    position:absolute;
+    position: relative;
 }
 
 #viz-container {
     position:relative;
-    top: 35px;
+    top:0;
     pointer-events: all;
+}
+
+@media only screen and (max-width: 600px) {
+    #credits-info {
+        top:auto;
+        bottom: 0px;
+    }
+    #legend-container {
+        top:auto;
+        bottom:0px;
+    }
+
+    #main-inputs-container {
+        width:100%;
+    }
+
+}
+
+::-webkit-scrollbar {
+    width: 0px;
+	background: transparent;
+	/* make scrollbar transparent */
 }

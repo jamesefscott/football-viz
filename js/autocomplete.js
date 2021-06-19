@@ -96,6 +96,3 @@ function autocomplete(inp, arr) {
     closeAllLists(e.target);
   });
 }
-
-autocomplete(document.getElementById("team1"), allTeams);
-autocomplete(document.getElementById("team2"), allTeams);

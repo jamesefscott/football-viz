@@ -17,12 +17,19 @@
     <script src="js/main_data.js"></script>
     <link rel="stylesheet" type="text/css" href="css/main.css">
     <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="js/autocomplete.js"></script>
+    <script src="js/generic_functions.js"></script>
 
 </head>
 
 <body>
 
     <div id="header-container">
+        <div id="country-input-container">
+            <select name="country" id="country-select" onchange="filterCountry();">
+                <!-- options added in script -->
+            </select>
+        </div>
         <div id="main-inputs-container">
             <div class="autocomplete-container">
                 <input type="text" name="first-team" id="team1" value="Everton">
@@ -67,19 +74,74 @@
 
 
     <script>
-        var team1, team2, data, plotData;
-        var hoverSensitive = true;
-        var teamSet = new Set(engData.map(x => x['HomeTeam']).concat(engData.map(x => x['AwayTeam'])));
-        var allTeams = Array.from(teamSet);
-        var colors = {};
-        allTeams.sort();
 
+        var countrySet = new Set(allData.map(x => x['country']));
+        var allCountries = Array.from(countrySet);
+        var countrySelect = document.getElementById("country-select");
+        var team1Input = document.getElementById("team1");
+        var team2Input = document.getElementById("team2");
+        // get unique country names and create option elements under the country select
+        allCountries.forEach(function (country, index) {
+            var thisOption = document.createElement("option");
+            thisOption.value = country;
+            thisOption.innerText = country;
+            if (country == 'England') {
+                thisOption.selected = true;
+            }
+            countrySelect.appendChild(thisOption);
+        });
+
+        var countryData, team1, team2, data, plotData, teamSet, allTeams;
+        var hoverSensitive = true;
+        var colors = {};
+        var firstLoad = true;
+
+        // fetch parameters from URL
+        var GET = {};
+        var query = window.location.search.substring(1).split("&");
+        for (var i = 0, max = query.length; i < max; i++) {
+            if (query[i] === "") // check for trailing & with no param
+                continue;
+
+            var param = query[i].split("=");
+            GET[decodeURIComponent(param[0])] = decodeURIComponent(param[1] || "");
+        };
+
+        // update values of country select element / team name inputs to match URL parameters 
+
+        if ('country' in GET) {
+            countrySelect.value = GET['country'];
+        }
+        if ('team1' in GET) {
+            team1Input.value = GET['team1'];
+        }
+        if ('team2' in GET) {
+            team2Input.value = GET['team2'];
+        }
+
+        function filterCountry() {
+            countryData = allData.filter(d => d['country'] == countrySelect.value);
+            teamSet = new Set(countryData.map(x => x['HomeTeam']).concat(countryData.map(x => x['AwayTeam'])));
+            allTeams = Array.from(teamSet);
+            allTeams.sort();
+            if (!firstLoad) {
+                team1Input.value = "";
+                team2Input.value = "";
+            } else {
+                //url parameters
+                firstLoad = false;
+            }
+            autocomplete(team1Input, allTeams);
+            autocomplete(team2Input, allTeams);
+            window.history.replaceState('', '', updateURLParameter(window.location.href, 'country', countrySelect.value, []));
+        }
+
+        filterCountry();
 
         function filterData() {
             team1 = document.getElementById('team1').value;
             team2 = document.getElementById('team2').value;
-            data = engData.filter(d => ((d['AwayTeam'] == team1 && d['HomeTeam'] == team2) || (d['AwayTeam'] == team2 && d['HomeTeam'] == team1)));
-            console.log(data.length);
+            data = countryData.filter(d => ((d['AwayTeam'] == team1 && d['HomeTeam'] == team2) || (d['AwayTeam'] == team2 && d['HomeTeam'] == team1)));
 
             document.getElementById('team1-name').innerText = team1 + " win";
             document.getElementById('team2-name').innerText = team2 + " win";
@@ -88,6 +150,9 @@
             colors[team1] = '#27c';
             colors[team2] = '#c22';
             colors['draw'] = '#555';
+
+            window.history.replaceState('', '', updateURLParameter(window.location.href, 'team1', team1, []));
+            window.history.replaceState('', '', updateURLParameter(window.location.href, 'team2', team2, []));
 
             updateViz();
 
@@ -132,7 +197,6 @@
             var maxy = Math.max(...plotData.map(d => d['team-1-goals']));
             var miny = Math.min(...plotData.map(d => d['team-2-goals'] * -1));
             var maxabsy = Math.max(maxy, miny * -1);
-            console.log(maxx);
 
             // X scale and Axis
             var x = d3.scaleTime()
@@ -284,7 +348,6 @@
 
         filterData();
     </script>
-    <script src="js/autocomplete.js"></script>
 
 </body>
 

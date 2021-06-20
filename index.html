@@ -5,9 +5,9 @@
     <meta charset="utf-8" />
     <title>Football Viz | Inspired by FT</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <!-- link rel="icon" href="ladybird.png" -->
+    <link rel="icon" href="img/icon_v2.png">
     <meta property="og:title" content="FT-Inspired Football Viz">
-    <!-- meta property="og:image" content="https://species-quiz.netlify.app/ladybird.png" -->
+    <meta property="og:image" content="https://jamesefscott.github.io/football-viz/img/meta_image.jpg">
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,400&display=swap"
@@ -32,13 +32,15 @@
         </div>
         <div id="main-inputs-container">
             <div class="autocomplete-container">
-                <input type="text" name="first-team" id="team1" value="Everton">
+                <input type="text" name="first-team" id="team1" class="team-input team1-colored" value="Scotland">
+                <input type="Color" value="#2277cc" class="team-color-input" id="team1-color-input" onchange="updateColor(this,'team1-color');">
             </div>
             <span style="margin-top:4px;">vs</span>
             <div class="autocomplete-container">
-                <input type="text" name="second-team" id="team2" value="Liverpool">
+                <input type="text" name="second-team" id="team2" class="team-input team2-colored" value="England">
+                <input type="Color" value="#cc2222" class="team-color-input" id="team2-color-input" onchange="updateColor(this,'team2-color');">
             </div>
-            <button class="button-type-a" onclick="filterData();">Update</button>
+            <button class="button-type-a" onclick="filterData();">Update teams</button>
         </div>
     </div>
 
@@ -49,24 +51,24 @@
     </div>
 
     <div id="credits-info">
-        Based on graphic from Financial Times<br>Prompted by <a href="https://twitter.com/VictimOfMaths" target="_blank">@VictimOfMaths</a><br>Data
-        from <a href="https://www.football-data.co.uk/" target="_blank">football-data.co.uk</a>
+        Based on graphic from Financial Times<br>Suggested by <a href="https://twitter.com/VictimOfMaths" target="_blank">@VictimOfMaths</a><br>Data
+        from <a href="https://www.football-data.co.uk/" target="_blank">football-data.co.uk</a> (clubs) & <a href="https://www.kaggle.com/martj42/international-football-results-from-1872-to-2017" target="_blank">kaggle</a> (intl.)
     </div>
 
     <div id="legend-container">
         <div class="legend-row" id="legend-team1">
             <div class="legend-count" id="team1-wins"></div>
-            <div class="legend-color" id="team1-color"></div>
+            <div class="legend-color team1-colored" id="team1-color"></div>
             <div class="legend-text" id="team1-name"></div>
         </div>
         <div class="legend-row" id="legend-team2">
             <div class="legend-count" id="team2-wins"></div>
-            <div class="legend-color" id="team2-color"></div>
+            <div class="legend-color team2-colored" id="team2-color"></div>
             <div class="legend-text" id="team2-name"></div>
         </div>
         <div class="legend-row" id="legend-draw">
             <div class="legend-count" id="draw-count"></div>
-            <div class="legend-color" id="draw-color"></div>
+            <div class="legend-color draw-colored" id="draw-color"></div>
             <div class="legend-text" id="draw-name">Draw</div>
         </div>
     </div>
@@ -74,27 +76,28 @@
 
 
     <script>
-
+        // set global variables
+        // get unique country names
+        var countryData, team1, team2, data, plotData, teamSet, allTeams,ptop;
+        var hoverSensitive = true;
+        var colors = {};
+        var firstLoad = true;
         var countrySet = new Set(allData.map(x => x['country']));
         var allCountries = Array.from(countrySet);
         var countrySelect = document.getElementById("country-select");
         var team1Input = document.getElementById("team1");
         var team2Input = document.getElementById("team2");
-        // get unique country names and create option elements under the country select
+
+        // create option element for each country
         allCountries.forEach(function (country, index) {
             var thisOption = document.createElement("option");
             thisOption.value = country;
             thisOption.innerText = country;
-            if (country == 'England') {
+            if (country == 'International') {
                 thisOption.selected = true;
             }
             countrySelect.appendChild(thisOption);
         });
-
-        var countryData, team1, team2, data, plotData, teamSet, allTeams;
-        var hoverSensitive = true;
-        var colors = {};
-        var firstLoad = true;
 
         // fetch parameters from URL
         var GET = {};
@@ -108,7 +111,6 @@
         };
 
         // update values of country select element / team name inputs to match URL parameters 
-
         if ('country' in GET) {
             countrySelect.value = GET['country'];
         }
@@ -118,7 +120,17 @@
         if ('team2' in GET) {
             team2Input.value = GET['team2'];
         }
+        if ('team1-color' in GET){
+            document.getElementById("team1-color-input").value = `#${GET['team1-color']}`;
+            document.documentElement.style.setProperty("--team1-color", document.getElementById("team1-color-input").value);
+        }
+        if ('team2-color' in GET){ 
+            document.getElementById("team2-color-input").value = `#${GET['team2-color']}`;
+            document.documentElement.style.setProperty("--team2-color", document.getElementById("team2-color-input").value);
+        }
 
+        // function to refresh main data variable (countryData) to match the currently selected country
+        // Default to England if first load and not in URL parameters 
         function filterCountry() {
             countryData = allData.filter(d => d['country'] == countrySelect.value);
             teamSet = new Set(countryData.map(x => x['HomeTeam']).concat(countryData.map(x => x['AwayTeam'])));
@@ -131,13 +143,16 @@
                 //url parameters
                 firstLoad = false;
             }
+            // re-initiate autocomplete for new teams
             autocomplete(team1Input, allTeams);
             autocomplete(team2Input, allTeams);
+            // replace url parameter
             window.history.replaceState('', '', updateURLParameter(window.location.href, 'country', countrySelect.value, []));
         }
-
+        // run on load 
         filterCountry();
 
+        // filter countryData by chosen teams
         function filterData() {
             team1 = document.getElementById('team1').value;
             team2 = document.getElementById('team2').value;
@@ -151,6 +166,7 @@
             colors[team2] = '#c22';
             colors['draw'] = '#555';
 
+            // replace url parameters
             window.history.replaceState('', '', updateURLParameter(window.location.href, 'team1', team1, []));
             window.history.replaceState('', '', updateURLParameter(window.location.href, 'team2', team2, []));
 
@@ -160,14 +176,16 @@
 
         function updateViz() {
 
-            // set the dimensions and margins of the graph
+            // set the dimensions and margins of the graph, according to window width & height
             var margin = { top: 30, right: 30, bottom: 30, left: 60 },
                 width = window.innerWidth - margin.left - margin.right,
                 height = Math.round(Math.min(window.innerHeight * 0.8, window.innerWidth)) - margin.top - margin.bottom;
-
+            ptop = document.getElementById("main-viz").getBoundingClientRect()['top'];
+            // remove previous graph
             d3.select("#main-viz").html("");
 
             // append the svg object to the body of the page
+            // viewbox for responsive sizing
             var svg = d3.select("#main-viz")
                 .append("svg")
                 .attr("preserveAspectRatio", "xMinYMin meet")
@@ -178,6 +196,8 @@
                 .append("g")
                 .attr("transform",
                     "translate(" + margin.left + "," + margin.top + ")");
+            
+            // map data to the correct format for plotting with d3
             plotData = data.map(function (d) {
                 var newrec = {};
                 newrec['team-1-goals'] = ((d['HomeTeam'] == team1) ? d['FTHG'] : d['FTAG']);
@@ -186,12 +206,15 @@
                 newrec['winner'] = ((d['FTR'] == 'D') ? 'draw' : ((d['FTR'] == 'H') ? d['HomeTeam'] : d['AwayTeam']));
                 return newrec;
             });
+            // sort matches by date
             plotData.sort(function (a, b) { return a['date'].getTime() - b['date'].getTime() });
-
+            
+            // update legend with no. of wins/draws
             document.getElementById('team1-wins').innerHTML = `<span>${plotData.filter(d => d['winner'] == team1).length}</span>`;
             document.getElementById('team2-wins').innerHTML = `<span>${plotData.filter(d => d['winner'] == team2).length}</span>`;
             document.getElementById('draw-count').innerHTML = `<span>${plotData.filter(d => d['winner'] == 'draw').length}</span>`;
-
+            
+            // min & max of date & goals, for x & y limits 
             var maxx = Math.max(...plotData.map(d => d['date']));
             var minx = Math.min(...plotData.map(d => d['date']));
             var maxy = Math.max(...plotData.map(d => d['team-1-goals']));
@@ -200,8 +223,8 @@
 
             // X scale and Axis
             var x = d3.scaleTime()
-                .domain([minx, maxx])         // This is the min and the max of the data: 0 to 100 if percentages
-                .range([0, width]);    // This is the corresponding value I want in Pixel
+                .domain([minx, maxx])
+                .range([0, width]);
             svg
                 .append('g')
                 .attr("transform", "translate(0," + height + ")")
@@ -209,8 +232,8 @@
 
             // Y scale and Axis
             var y = d3.scaleLinear()
-                .domain([maxabsy * -1 - 1, maxabsy + 1])         // This is the min and the max of the data: 0 to 100 if percentages
-                .range([height, 0]);       // This is the corresponding value I want in Pixel
+                .domain([maxabsy * -1 - 1, maxabsy + 1])
+                .range([height, 0]);
 
             svg
                 .append('g')
@@ -225,15 +248,6 @@
             function make_y_gridlines() {
                 return d3.axisLeft(y)
             }
-
-
-            svg.append("text")
-                .text(`${team1} Goals`)
-                .attr("style", "color:#333; font-size:0.9em; text-align:center; transform: translate(-25px,30%) rotate(-90deg)")
-
-            svg.append("text")
-                .text(`${team2} Goals`)
-                .attr("style", "color:#333; font-size:0.9em; text-align:center; transform: translate(-25px,78%) rotate(-90deg)")
 
             // add the X gridlines
             svg.append("g")
@@ -252,6 +266,16 @@
                     .tickFormat("")
                 )
 
+            // separate y labels for goals of each team
+            svg.append("text")
+                .text(`${team1} Goals`)
+                .attr("style", "color:#333; font-size:0.9em; text-align:center; transform: translate(-25px,30%) rotate(-90deg)");
+
+            svg.append("text")
+                .text(`${team2} Goals`)
+                .attr("style", "color:#333; font-size:0.9em; text-align:center; transform: translate(-25px,78%) rotate(-90deg)");
+
+            // line at y = 0
             svg.append("path")
                 .datum([[minx, 0], [maxx, 0]])
                 .attr("fill", "none")
@@ -262,7 +286,7 @@
                     .y(function (d) { return y(d[1]) })
                 )
 
-
+            // add a node for each match, with mouse__ functions for tooltip behaviour
             var node = svg.selectAll("whatever")
                 .data(plotData)
                 .enter()
@@ -271,31 +295,40 @@
                 .on('mousemove', mousemove)
                 .on('mouseleave', mouseleave)
                 .on("click", click)
-
+            // add a path (vertical line) for each node
             node.append("path")
                 .attr("fill", "none")
-                .attr("stroke", function (d) { return colors[d['winner']]; })
+//                .attr("stroke", function (d) { return colors[d['winner']]; })
+                .attr('class', function (d) { return ((d['winner'] == team1) ? 'team1-colored' : ((d['winner'] == team2) ? 'team2-colored' : 'draw-colored')) })
                 .attr("stroke-width", 2)
                 .datum(function (d) { return [[d['date'], d['team-1-goals']], [d['date'], d['team-2-goals'] * -1]] })
                 .attr("d", d3.line()
                     .x(function (d) { return x(d[0]) })
                     .y(function (d) { return y(d[1]) })
-                )
-
+                );
+            // add top circle for each node
             node.append("circle")
                 .attr("cx", function (d) { return x(d['date']) })
                 .attr("cy", function (d) { return y(d['team-1-goals']) })
                 .attr("r", 4)
+                .attr("stroke-width", 0)
                 //.attr('stroke', '#fff')
-                .attr('fill', function (d) { return colors[d['winner']]; })
-
+                .attr('class', function (d) { return ((d['winner'] == team1) ? 'team1-colored' : ((d['winner'] == team2) ? 'team2-colored' : 'draw-colored')) })
+                //.attr('fill', function (d) { return colors[d['winner']]; })
+                ;
+            
+                // add bottom circle for each node
             node.append("circle")
                 .attr("cx", function (d) { return x(d['date']) })
                 .attr("cy", function (d) { return y(d['team-2-goals'] * -1) })
                 .attr("r", 4)
+                .attr("stroke-width", 0)
                 //.attr('stroke', '#fff')
-                .attr('fill', function (d) { return colors[d['winner']]; })
-
+                .attr('class', function (d) { return ((d['winner'] == team1) ? 'team1-colored' : ((d['winner'] == team2) ? 'team2-colored' : 'draw-colored')) })
+                //.attr('fill', function (d) { return colors[d['winner']]; })
+                ;
+            
+            
             var Tooltip = d3.select("#main-viz")
                 .append("div")
                 .attr("class", "tooltip")
@@ -308,6 +341,8 @@
                 .style("padding", "3px")
                 .style("box-shadow", "0 2px 3px 0 rgba(0,0,0,0.2)")
                 .style("position", "absolute");
+
+            var tooltipElement = Tooltip['_groups'][0][0];
 
             // Three functions that change the tooltip when user hover / move / leave a point
             function mouseover(e, d) {
@@ -323,9 +358,9 @@
             function mousemove(event) {
                 if (hoverSensitive) {
                     Tooltip
-                        .style("left", (event.clientX + 15) + "px")
-                        .style("top", (event.clientY - 70) + "px")
-                        .style("max-height", `${window.innerHeight - d3.pointer(event)[1] - 8}px`);
+                        .style("left", (event.clientX) + "px")
+                        .style("top", (event.clientY - ptop -50) + "px")
+                        ;
                 }
             }
             function mouseleave(e) {
@@ -337,7 +372,7 @@
                 }
             }
 
-            // function that freezes/unfreezes the tooltip when a point is clicked
+            // function that freezes/unfreezes the tooltip when a node is clicked
             function click(e, d) {
                 hoverSensitive = !hoverSensitive
                 Tooltip
@@ -347,6 +382,13 @@
         };
 
         filterData();
+
+        function updateColor(thisPicker,colTeam) {
+            document.documentElement.style.setProperty(`--${colTeam}`, thisPicker.value);
+            window.history.replaceState('', '', updateURLParameter(window.location.href, colTeam, thisPicker.value.replace("#",""), []));
+        }
+
+
     </script>
 
 </body>

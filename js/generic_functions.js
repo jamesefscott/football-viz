@@ -1,4 +1,4 @@
-// taken from https://stackoverflow.com/questions/1090948/change-url-parameters
+// adapted from https://stackoverflow.com/questions/1090948/change-url-parameters
 function updateURLParameter(url, param, paramVal, removeArray) {
     var TheAnchor = null;
     var newAdditionalURL = "";

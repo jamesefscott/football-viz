@@ -1,3 +1,4 @@
+// original code from W3 Schools https://www.w3schools.com/howto/howto_js_autocomplete.asp
 
 function autocomplete(inp, arr) {
   /*the autocomplete function takes two arguments,
